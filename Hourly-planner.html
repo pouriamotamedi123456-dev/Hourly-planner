@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>برنامه‌ریزی ساعتی</title>
+
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="برنامه ساعتی">
+<meta name="theme-color" content="#5C7CA3">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%235C7CA3'/%3E%3Ccircle cx='50' cy='50' r='28' fill='none' stroke='white' stroke-width='6'/%3E%3Cpath d='M50 34v18l12 8' stroke='white' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%235C7CA3'/%3E%3Ccircle cx='50' cy='50' r='28' fill='none' stroke='white' stroke-width='6'/%3E%3Cpath d='M50 34v18l12 8' stroke='white' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+
+<style>
+  :root{
+    --bg:#F3F6EC;
+    --surface:#FFFFFF;
+    --text:#2B3A28;
+    --text-muted:#75836C;
+    --line:#E3E9D6;
+
+    --spring-1:#6FA05C; --spring-2:#EE9FB6; --spring-bg:#EAF3E4;
+    --summer-1:#DE9E33; --summer-2:#4EA3C7; --summer-bg:#FBF1E0;
+    --autumn-1:#BD8138; --autumn-2:#8C4B57; --autumn-bg:#F5ECDF;
+    --winter-1:#5C7CA3; --winter-2:#B7C4DA; --winter-bg:#EAEFF6;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background-color:var(--bg);
+    background-image:radial-gradient(circle, #DCE6CC 1.2px, transparent 1.2px);
+    background-size:22px 22px;
+    color:var(--text);
+    font-family:Tahoma,'Segoe UI',Vazirmatn,sans-serif;
+    min-height:100vh;
+    -webkit-tap-highlight-color:transparent;
+  }
+  #app{
+    max-width:520px;
+    margin:0 auto;
+    min-height:100vh;
+    background:var(--bg);
+    position:relative;
+    padding-bottom:40px;
+  }
+
+  /* ---------- Header ---------- */
+  .hero{
+    padding:26px 20px 20px;
+    color:#fff;
+    border-radius:0 0 26px 26px;
+    position:relative;
+    overflow:hidden;
+  }
+  .hero::before, .hero::after{
+    content:'';
+    position:absolute;
+    border-radius:50%;
+    background:rgba(255,255,255,0.14);
+    pointer-events:none;
+  }
+  .hero::before{ width:130px; height:130px; top:-46px; left:-36px; }
+  .hero::after{ width:80px; height:80px; bottom:-28px; left:40%; background:rgba(255,255,255,0.09); }
+  .hero-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    position:relative;
+    z-index:1;
+  }
+  .year-switch{ display:flex; align-items:center; gap:10px; }
+  .year-switch button{
+    background:rgba(255,255,255,0.22);
+    border:none; color:#fff;
+    width:30px;height:30px;
+    border-radius:50%;
+    font-size:16px; cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    line-height:1;
+  }
+  .year-switch button:active{ transform:scale(0.92); }
+  .year-label{ font-size:15px; font-weight:600; }
+  .hero-title{ margin:16px 0 4px; font-size:24px; font-weight:800; position:relative; z-index:1; }
+  .hero-sub{ font-size:13px; opacity:0.9; margin-bottom:4px; position:relative; z-index:1; }
+
+  /* ---------- Seasons / months (home) ---------- */
+  .seasons{ padding:20px 16px 0; }
+  .season-block{ margin-bottom:22px; }
+  .season-head{ display:flex; align-items:center; gap:8px; margin-bottom:10px; padding:0 2px; }
+  .season-head svg{ width:20px; height:20px; }
+  .season-head span{ font-size:14.5px; font-weight:600; color:var(--text); }
+  .month-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .month-card{
+    border-radius:16px;
+    padding:14px 8px 12px;
+    text-align:center;
+    cursor:pointer;
+    border:1px solid var(--line);
+    transition:transform .15s ease;
+    position:relative;
+    overflow:hidden;
+  }
+  .month-card::before{
+    content:''; position:absolute; width:56px;height:56px; border-radius:50%;
+    top:-24px; right:-20px; background:var(--card-glow,transparent); opacity:0.5;
+  }
+  .month-card:active{ transform:scale(0.95); }
+  .month-card > *{ position:relative; z-index:1; }
+  .month-card .m-name{ font-size:13px; font-weight:600; margin-bottom:6px; }
+  .m-frac{ font-size:10.5px; color:var(--text-muted); }
+  .ring{ width:40px;height:40px; margin:0 auto 6px; position:relative; }
+  .ring svg{ transform:rotate(-90deg); }
+  .ring-track{ fill:none; stroke:var(--line); stroke-width:4; }
+  .ring-fill{ fill:none; stroke-width:4; stroke-linecap:round; transition:stroke-dashoffset .4s ease; }
+  .ring-text{ position:absolute; inset:0; display:flex;align-items:center;justify-content:center; font-size:9.5px; font-weight:600; color:var(--text-muted); }
+
+  /* ---------- Month view (day list) ---------- */
+  .month-view, .day-view{ display:none; padding:16px 16px 8px; }
+  .view-header{ display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  .back-btn{
+    width:36px;height:36px; border-radius:50%;
+    background:var(--surface); border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center; cursor:pointer; font-size:16px; flex-shrink:0;
+  }
+  .back-btn:active{ transform:scale(0.9); }
+  .view-title{ font-size:19px; font-weight:700; }
+
+  .day-row{
+    display:flex; align-items:center; gap:12px;
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:14px; padding:12px 14px; margin-bottom:8px;
+    cursor:pointer; position:relative;
+  }
+  .day-row.today{ border-color:var(--accent-1,#5C7CA3); box-shadow:0 0 0 1px var(--accent-1,#5C7CA3) inset; }
+  .day-row:active{ transform:scale(0.98); }
+  .day-row .d-num{ font-weight:700; font-size:15px; width:26px; text-align:center; color:var(--text-muted); }
+  .day-row.today .d-num{ color:var(--accent-1,#5C7CA3); }
+  .day-row .d-info{ flex:1; font-size:12px; color:var(--text-muted); }
+  .day-row .d-chip{
+    font-size:10.5px; background:var(--bg); border-radius:8px; padding:3px 8px; color:var(--text-muted); white-space:nowrap;
+  }
+  .today-tag{
+    position:absolute; top:-7px; right:14px; background:var(--accent-1,#5C7CA3); color:#fff;
+    font-size:9px; padding:2px 7px; border-radius:8px; font-weight:600;
+  }
+
+  /* ---------- Day view ---------- */
+  .add-form{
+    background:var(--surface); border:1px solid var(--line); border-radius:16px;
+    padding:14px; margin-bottom:16px;
+  }
+  .add-form-row{ display:flex; gap:8px; margin-bottom:8px; }
+  .time-input{
+    flex:1; border:1px solid var(--line); border-radius:10px; padding:8px 6px;
+    font-family:inherit; font-size:13px; color:var(--text); background:var(--bg); text-align:center;
+  }
+  .text-input{
+    width:100%; border:1px solid var(--line); border-radius:10px; padding:9px 10px;
+    font-family:inherit; font-size:13.5px; color:var(--text); background:var(--bg); margin-bottom:8px;
+  }
+  .add-btn{
+    width:100%; border:none; border-radius:10px; padding:10px; color:#fff;
+    font-family:inherit; font-size:13.5px; font-weight:600; cursor:pointer;
+  }
+  .add-btn:active{ opacity:0.85; }
+
+  .day-progress-wrap{
+    background:var(--surface); border:1px solid var(--line); border-radius:16px;
+    padding:12px 16px; margin-bottom:16px; display:flex; align-items:center; gap:12px;
+  }
+  .day-progress-track{ flex:1; height:8px; border-radius:5px; background:var(--line); overflow:hidden; }
+  .day-progress-fill{ height:100%; border-radius:5px; transition:width .3s ease; }
+  .day-progress-num{ font-size:12.5px; color:var(--text-muted); white-space:nowrap; }
+
+  .timeline-section{
+    background:var(--surface); border:1px solid var(--line); border-radius:16px;
+    padding:14px 10px 14px 4px; margin-bottom:16px; position:relative;
+  }
+  .timeline-body{ display:flex; gap:6px; position:relative; }
+  .hour-col{ width:34px; flex-shrink:0; position:relative; height:960px; }
+  .hour-tick{
+    position:absolute; right:0; transform:translateY(-50%);
+    font-size:9.5px; color:var(--text-muted);
+  }
+  .track{ flex:1; position:relative; height:960px; border-right:1px dashed var(--line); }
+  .track-gridline{ position:absolute; left:0; right:0; border-top:1px solid var(--line); opacity:0.5; }
+  .now-line{ position:absolute; left:0; right:0; height:2px; background:#D9534F; z-index:5; }
+  .now-dot{ position:absolute; right:-4px; top:-3px; width:8px; height:8px; border-radius:50%; background:#D9534F; }
+  .tblock{
+    position:absolute; left:4px; right:4px; border-radius:8px;
+    padding:3px 8px; font-size:11px; color:#fff; overflow:hidden;
+    display:flex; flex-direction:column; justify-content:center;
+    box-shadow:0 1px 3px rgba(0,0,0,0.12);
+  }
+  .tblock.done{ opacity:0.55; }
+  .tblock b{ font-size:11px; font-weight:700; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tblock span{ font-size:9.5px; opacity:0.9; }
+
+  .block-list-title{ font-size:13px; font-weight:600; color:var(--text-muted); margin:0 2px 8px; }
+  .block-item{
+    display:flex; align-items:center; gap:10px;
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
+    padding:10px 12px; margin-bottom:8px;
+  }
+  .block-time{
+    font-size:11.5px; color:var(--text-muted); text-align:center; flex-shrink:0; width:56px;
+    line-height:1.4;
+  }
+  .block-bar{ width:4px; align-self:stretch; border-radius:3px; flex-shrink:0; }
+  .block-text{
+    flex:1; border:none; outline:none; background:transparent; font-family:inherit;
+    font-size:13.5px; color:var(--text); min-width:0;
+  }
+  .block-text.done-text{ text-decoration:line-through; color:var(--text-muted); }
+  .check-btn{
+    width:24px;height:24px; border-radius:50%; border:2px solid var(--line);
+    flex-shrink:0; cursor:pointer; display:flex;align-items:center;justify-content:center;
+    background:#fff; transition:transform .18s cubic-bezier(.34,1.56,.64,1), background .15s ease, border-color .15s ease;
+  }
+  .check-btn svg{ width:13px;height:13px; opacity:0; transition:opacity .12s ease; }
+  .check-btn.checked{ transform:scale(1.08); }
+  .check-btn.checked svg{ opacity:1; }
+  .check-btn.pop{ animation:pop .32s ease; }
+  @keyframes pop{ 0%{transform:scale(1);} 40%{transform:scale(1.35);} 100%{transform:scale(1.08);} }
+  .block-remove{ width:20px;height:20px; flex-shrink:0; border:none; background:none; color:#C7D0BC; font-size:15px; cursor:pointer; }
+  .empty-note{ text-align:center; color:var(--text-muted); font-size:12.5px; padding:10px 0 4px; }
+
+  /* ---------- Toast ---------- */
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--text); color:#fff; padding:10px 20px; border-radius:20px; font-size:13px;
+    opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease;
+    max-width:80%; text-align:center; z-index:50;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="hero" id="hero">
+    <div class="hero-top">
+      <div class="year-switch">
+        <button id="yearNext" aria-label="سال بعد">‹</button>
+        <span class="year-label" id="yearLabel">۱۴۰۵</span>
+        <button id="yearPrev" aria-label="سال قبل">›</button>
+      </div>
+      <div style="font-size:12px; opacity:0.85;" id="todayLabel"></div>
+    </div>
+    <div class="hero-title">برنامه‌ریزی ساعتی</div>
+    <div class="hero-sub">برای هر روز، ساعت‌های خودت رو دستی بچین</div>
+  </div>
+
+  <div class="seasons" id="seasons"></div>
+
+  <div class="month-view" id="monthView">
+    <div class="view-header">
+      <div class="back-btn" id="backToHome">→</div>
+      <div class="view-title" id="monthTitle">فروردین</div>
+    </div>
+    <div id="dayRows"></div>
+  </div>
+
+  <div class="day-view" id="dayView">
+    <div class="view-header">
+      <div class="back-btn" id="backToMonth">→</div>
+      <div class="view-title" id="dayTitle"></div>
+    </div>
+
+    <div class="day-progress-wrap">
+      <div class="day-progress-track"><div class="day-progress-fill" id="dayProgressFill"></div></div>
+      <div class="day-progress-num" id="dayProgressNum">۰/۰</div>
+    </div>
+
+    <div class="add-form">
+      <div class="add-form-row">
+        <input type="time" class="time-input" id="newStart">
+        <input type="time" class="time-input" id="newEnd">
+      </div>
+      <input type="text" class="text-input" id="newLabel" placeholder="این بازه رو به چی اختصاص می‌دی؟">
+      <button class="add-btn" id="addBlockBtn">افزودن بازه</button>
+    </div>
+
+    <div class="timeline-section">
+      <div class="timeline-body" id="timelineBody"></div>
+    </div>
+
+    <div class="block-list-title">لیست بازه‌ها</div>
+    <div id="blockList"></div>
+  </div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+
+/* ================= Jalaali calendar core ================= */
+function div(a,b){ return ~~(a/b); }
+function mod(a,b){ return a - ~~(a/b)*b; }
+function g2d(gy,gm,gd){
+  var d = div((gy + div(gm-8,6) + 100100) * 1461, 4) + div(153*mod(gm+9,12)+2, 5) + gd - 34840408;
+  d = d - div(div(gy+100100+div(gm-8,6),100)*3,4) + 752;
+  return d;
+}
+function d2g(jdn){
+  var j = 4*jdn + 139361631;
+  j = j + div(div(4*jdn+183187720,146097)*3,4)*4 - 3908;
+  var i = div(mod(j,1461),4)*5 + 308;
+  var gd = div(mod(i,153),5) + 1;
+  var gm = mod(div(i,153),12) + 1;
+  var gy = div(j,1461) - 100100 + div(8-gm,6);
+  return {gy:gy,gm:gm,gd:gd};
+}
+function jalCal(jy){
+  var breaks=[-61,9,38,199,426,686,756,818,1111,1181,1210,1635,2060,2097,2192,2262,2324,2394,2456,3178];
+  var bl=breaks.length, gy=jy+621, leapJ=-14, jp=breaks[0], jm,jump,leap,n,march,i;
+  for(i=1;i<bl;i+=1){
+    jm=breaks[i]; jump=jm-jp;
+    if(jy<jm) break;
+    leapJ = leapJ + div(jump,33)*8 + div(mod(jump,33),4);
+    jp=jm;
+  }
+  n = jy - jp;
+  leapJ = leapJ + div(n,33)*8 + div(mod(n,33)+3,4);
+  if(mod(jump,33)===4 && jump-n===4) leapJ += 1;
+  var leapG = div(gy,4) - div((div(gy,100)+1)*3,4) - 150;
+  march = 20 + leapJ - leapG;
+  if(jump-n < 6) n = n - jump + div(jump,33)*33;
+  leap = mod(mod(n+1,33)-1,4);
+  if(leap===-1) leap=4;
+  return {leap:leap, gy:gy, march:march};
+}
+function d2j(jdn){
+  var gy = d2g(jdn).gy;
+  var jy = gy - 621;
+  var r = jalCal(jy);
+  var jdn1f = g2d(gy,3,r.march);
+  var k = jdn - jdn1f;
+  var jm,jd;
+  if(k>=0){
+    if(k<=185){ jm=1+div(k,31); jd=mod(k,31)+1; return {jy:jy,jm:jm,jd:jd}; }
+    else { k -= 186; }
+  } else {
+    jy -= 1; k += 179;
+    if(r.leap===0) k += 1;
+  }
+  jm = 7 + div(k,30);
+  jd = mod(k,30) + 1;
+  return {jy:jy,jm:jm,jd:jd};
+}
+function toJalaali(gy,gm,gd){ return d2j(g2d(gy,gm,gd)); }
+function isLeapJalaaliYear(jy){ return jalCal(jy).leap === 0; }
+function monthLength(jy,jm){
+  if(jm<=6) return 31;
+  if(jm<=11) return 30;
+  return isLeapJalaaliYear(jy) ? 30 : 29;
+}
+
+/* ================= helpers ================= */
+var faDigits=['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+function toFa(n){ return String(n).split('').map(function(ch){ return /[0-9]/.test(ch) ? faDigits[+ch] : ch; }).join(''); }
+function uid(){ return 'b'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function toFaTime(t){ return t ? t.split(':').map(toFa).join(':') : ''; }
+
+var monthNames = ["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
+var seasons = [
+  { name:"بهار", months:[0,1,2], c1:'--spring-1', c2:'--spring-2', bg:'--spring-bg',
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 21c0-6 4-9 8-10-1 6-3 10-8 10Z"/><path d="M12 21c0-6-4-9-8-10 1 6 3 10 8 10Z"/><path d="M12 21V9"/></svg>' },
+  { name:"تابستان", months:[3,4,5], c1:'--summer-1', c2:'--summer-2', bg:'--summer-bg',
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.3M12 19.2v2.3M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.3M19.2 12h2.3M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/></svg>' },
+  { name:"پاییز", months:[6,7,8], c1:'--autumn-1', c2:'--autumn-2', bg:'--autumn-bg',
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c3 2 5 5 5 8.5A5 5 0 0 1 12 17a5 5 0 0 1-5-5.5C7 8 9 5 12 3Z"/><path d="M12 17v4"/></svg>' },
+  { name:"زمستان", months:[9,10,11], c1:'--winter-1', c2:'--winter-2', bg:'--winter-bg',
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2v20M4 7l16 10M20 7 4 17M2 12h20"/></svg>' }
+];
+function seasonOf(monthIdx){ return seasons.find(function(s){ return s.months.indexOf(monthIdx) !== -1; }); }
+var motivational = ["آفرین! خیلی خوب پیش رفت","یک بازه‌ی دیگه تموم شد","عالی بود، همینطوری ادامه بده","منظم داری جلو می‌ری"];
+
+/* ================= data model =================
+   plan[year]["m-d"] = { blocks: [ {id, start:"HH:MM", end:"HH:MM", text, done} ] }
+*/
+function entryOf(dayObj){ return dayObj && dayObj.blocks ? dayObj : {blocks:[]}; }
+function minutesOf(t){ if(!t) return 0; var p=t.split(':'); return (+p[0])*60 + (+p[1]); }
+function dayStats(entry){
+  var blocks = (entry && entry.blocks) ? entry.blocks : [];
+  var total = blocks.length;
+  var done = blocks.filter(function(b){ return b.done; }).length;
+  return {total:total, done:done};
+}
+function isDayFullyDone(entry){
+  var st = dayStats(entry);
+  return st.total>0 && st.done===st.total;
+}
+
+/* ================= state ================= */
+var today = toJalaali(new Date().getFullYear(), new Date().getMonth()+1, new Date().getDate());
+var nowMinutes = new Date().getHours()*60 + new Date().getMinutes();
+var state = { year: today.jy, plans:{}, openMonth:0, openDay:1 };
+
+function planFor(year){ if(!state.plans[year]) state.plans[year] = {}; return state.plans[year]; }
+function dayKey(m,d){ return (m+1)+'-'+d; }
+function entryFor(year, mi, day){
+  var p = planFor(year); var k = dayKey(mi,day);
+  if(!p[k]) p[k] = {blocks:[]};
+  return p[k];
+}
+
+/* ================= storage (plain localStorage) ================= */
+function loadSettings(){
+  try{
+    var raw = localStorage.getItem('hourly-settings');
+    if(raw){ var v = JSON.parse(raw); if(v.year) state.year = v.year; }
+  }catch(e){}
+}
+function saveSettings(){
+  try{ localStorage.setItem('hourly-settings', JSON.stringify({year:state.year})); }catch(e){}
+}
+function loadPlan(year){
+  if(state.plans[year]) return;
+  try{
+    var raw = localStorage.getItem('hourly-plan-'+year);
+    state.plans[year] = raw ? JSON.parse(raw) : {};
+  }catch(e){ state.plans[year] = {}; }
+}
+var saveTimer=null;
+function savePlan(year){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(function(){
+    try{ localStorage.setItem('hourly-plan-'+year, JSON.stringify(planFor(year))); }catch(e){}
+  }, 350);
+}
+
+/* ================= rendering ================= */
+var $ = function(id){ return document.getElementById(id); };
+function getVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+function renderHeader(){
+  $('yearLabel').textContent = toFa(state.year);
+  var isToday = state.year === today.jy;
+  $('todayLabel').textContent = isToday ? ('امروز: ' + toFa(today.jd) + ' ' + monthNames[today.jm-1]) : '';
+  var curSeason = seasonOf(today.jm-1);
+  $('hero').style.background = 'linear-gradient(135deg, ' + getVar(curSeason.c1) + ', ' + getVar(curSeason.c2) + ')';
+}
+
+function renderSeasons(){
+  var wrap = $('seasons');
+  wrap.innerHTML = '';
+  var plan = planFor(state.year);
+  seasons.forEach(function(s){
+    var block = document.createElement('div');
+    block.className = 'season-block';
+    var head = document.createElement('div');
+    head.className = 'season-head';
+    head.style.color = getVar(s.c1);
+    head.innerHTML = s.icon + '<span style="color:var(--text)">' + s
